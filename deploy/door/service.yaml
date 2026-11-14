@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: door
+  namespace: inference
+  labels:
+    app: door
+    app.kubernetes.io/part-of: inference
+spec:
+  selector:
+    app: door
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

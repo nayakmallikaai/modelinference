@@ -1,0 +1,24 @@
+{
+  "gpusIdle": "GPUs idle: 4",
+  "peopleWaiting": "People waiting: nobody",
+  "fixture": "idle",
+  "fixtureLabel": "Idle, nobody waiting",
+  "notice": "Fixture numbers. Not a live fleet.",
+  "fleet": {
+    "readyGpus": { "value": 4, "status": "ready, idle" },
+    "idleGpus": { "value": 4, "status": "all idle" },
+    "waitingRequests": { "value": 0, "status": "nobody waiting" },
+    "pendingPods": { "value": 0, "status": "none pending" },
+    "spotGpus": { "value": 3, "status": "spot, idle" },
+    "onDemandGpus": { "value": 1, "status": "on-demand, idle" }
+  },
+  "efficiency": {
+    "tokensPerSecond": { "value": 0, "status": "no traffic" },
+    "costPerThousandTokens": { "value": 0.04, "status": "fixture ratio, not a cloud price" },
+    "kvFill": { "value": 0.02, "status": "nearly empty" }
+  },
+  "behavior": {
+    "timeToFirstToken": { "value": null, "status": "no requests in flight" },
+    "interTokenLatency": { "value": null, "status": "no tokens in flight" }
+  }
+}

@@ -1,0 +1,106 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm
+  namespace: inference
+  labels:
+    app: vllm
+    app.kubernetes.io/part-of: inference
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      app: vllm
+  template:
+    metadata:
+      labels:
+        app: vllm
+        app.kubernetes.io/part-of: inference
+    spec:
+      serviceAccountName: vllm
+      terminationGracePeriodSeconds: 90
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+      initContainers:
+        - name: weights
+          image: public.ecr.aws/aws-cli/aws-cli:2.22.35
+          imagePullPolicy: IfNotPresent
+          command:
+            - aws
+            - s3
+            - sync
+            - --only-show-errors
+            - s3://$(WEIGHT_BUCKET)/models/Meta-Llama-3.1-8B-Instruct
+            - /models/Meta-Llama-3.1-8B-Instruct
+          env:
+            - name: WEIGHT_BUCKET
+              valueFrom:
+                configMapKeyRef:
+                  name: inference-window
+                  key: bucket
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          volumeMounts:
+            - name: models
+              mountPath: /models
+      containers:
+        - name: vllm
+          image: vllm/vllm-openai:v0.10.2
+          imagePullPolicy: IfNotPresent
+          args:
+            - --model
+            - /models/Meta-Llama-3.1-8B-Instruct
+            - --served-model-name
+            - llama-3.1-8b-instruct
+            - --dtype
+            - bfloat16
+            - --max-model-len
+            - "8192"
+            - --gpu-memory-utilization
+            - "0.90"
+            - --max-num-seqs
+            - "16"
+          ports:
+            - name: http
+              containerPort: 8000
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            failureThreshold: 90
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 15
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sh", "-c", "sleep 15"]
+          resources:
+            requests:
+              cpu: "2"
+              memory: 8Gi
+              nvidia.com/gpu: "1"
+            limits:
+              nvidia.com/gpu: "1"
+          volumeMounts:
+            - name: models
+              mountPath: /models
+      volumes:
+        - name: models
+          emptyDir:
+            sizeLimit: 20Gi

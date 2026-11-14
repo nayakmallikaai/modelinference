@@ -1,0 +1,10 @@
+Idle fixture, first load in headless Chrome on this laptop.
+Page: http://127.0.0.1:8765/ from python3 -m http.server, bound to this machine.
+Visibility: visible.
+
+The two sentences were readable 287 ms after navigation start:
+GPUs idle: 4
+People waiting: nobody
+
+The sentence text was assigned at 268 ms. Researcher detail was filled at 288 ms.
+There is no time target.

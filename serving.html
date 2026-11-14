@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Serving</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#serving-latency">Skip to latency</a>
+  <div class="wrap">
+    <header>
+      <h1>Serving</h1>
+      <p class="subtitle">Latency, queue, and cache on this computer.</p>
+      <p class="subtitle"><a href="/">Fleet</a></p>
+      <p id="serving-notice" class="notice" role="status">Loading serving metrics.</p>
+    </header>
+    <main id="serving-latency">
+      <div class="table-wrap">
+        <table>
+          <caption>Time to first token, inter-token latency, end-to-end latency, queue wait, and KV cache.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Gauge</th>
+              <th scope="col">Value</th>
+              <th scope="col">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Time to first token</th>
+              <td id="ttft-value">No finished requests</td>
+              <td id="ttft-status" class="status">no finished requests</td>
+            </tr>
+            <tr>
+              <th scope="row">Inter-token latency</th>
+              <td id="itl-value">No finished requests</td>
+              <td id="itl-status" class="status">no finished requests</td>
+            </tr>
+            <tr>
+              <th scope="row">End-to-end latency</th>
+              <td id="e2e-value">No finished requests</td>
+              <td id="e2e-status" class="status">no finished requests</td>
+            </tr>
+            <tr>
+              <th scope="row">Queue wait</th>
+              <td id="queue-value">No finished requests</td>
+              <td id="queue-status" class="status">no finished requests</td>
+            </tr>
+            <tr>
+              <th scope="row">Prefill</th>
+              <td id="prefill-value">No finished requests</td>
+              <td id="prefill-status" class="status">no finished requests</td>
+            </tr>
+            <tr>
+              <th scope="row">KV cache</th>
+              <td id="kv-value">—</td>
+              <td id="kv-status" class="status">engine gauge</td>
+            </tr>
+            <tr>
+              <th scope="row">Running</th>
+              <td id="running-value">0</td>
+              <td id="running-status" class="status">engine</td>
+            </tr>
+            <tr>
+              <th scope="row">Waiting</th>
+              <td id="waiting-value">0</td>
+              <td id="waiting-status" class="status">door</td>
+            </tr>
+            <tr>
+              <th scope="row">Tokens per second</th>
+              <td id="rate-value">0 tokens/s</td>
+              <td id="rate-status" class="status">no traffic</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <h2>Outcomes</h2>
+      <div class="table-wrap">
+        <table>
+          <caption>Completed door responses by status.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Status</th>
+              <th scope="col">Count</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">200</th>
+              <td id="out-200">0</td>
+            </tr>
+            <tr>
+              <th scope="row">401</th>
+              <td id="out-401">0</td>
+            </tr>
+            <tr>
+              <th scope="row">429</th>
+              <td id="out-429">0</td>
+            </tr>
+            <tr>
+              <th scope="row">503</th>
+              <td id="out-503">0</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+    <footer>
+      <p>Latency and queue on this computer. Capacity stays on the fleet page.</p>
+    </footer>
+  </div>
+  <script src="serving.js"></script>
+</body>
+</html>

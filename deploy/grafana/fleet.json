@@ -1,0 +1,63 @@
+{
+  "uid": "inference-fleet",
+  "title": "Fleet",
+  "schemaVersion": 39,
+  "timezone": "utc",
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "GPUs idle",
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "count(kube_node_status_condition{condition=\"Ready\",status=\"true\"} * on(node) kube_node_labels{label_inference_ai_gpu=\"true\"})"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "People waiting",
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(door_requests_waiting)"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Cost per thousand tokens",
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "inference_gpu_dollars / (sum(increase(vllm:prompt_tokens_total[1h]) + increase(vllm:generation_tokens_total[1h])) / 1000)"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Spot GPU hours",
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "count(kube_node_labels{label_karpenter_sh_capacity_type=\"spot\",label_inference_ai_gpu=\"true\"})"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "On-demand GPU hours",
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "count(kube_node_labels{label_karpenter_sh_capacity_type=\"on-demand\",label_inference_ai_gpu=\"true\"})"
+        }
+      ]
+    }
+  ]
+}

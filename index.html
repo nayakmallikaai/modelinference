@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Fleet</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#answers">Skip to GPUs idle and people waiting</a>
+  <div class="wrap">
+    <header>
+      <h1>Fleet</h1>
+      <p class="subtitle">Capacity, efficiency, and model behavior on this computer.</p>
+      <p class="subtitle"><a href="/serving">Serving</a></p>
+      <p id="fixture-notice" class="notice" role="status">Fixture numbers. Not a live fleet.</p>
+      <fieldset id="fixture-switch" class="fixtures">
+        <legend>Fixture</legend>
+        <label><input type="radio" name="fixture" value="idle" checked> Idle, nobody waiting</label>
+        <label><input type="radio" name="fixture" value="busy"> Busy, people waiting</label>
+      </fieldset>
+      <fieldset id="ready-control" class="fixtures" hidden>
+        <legend>Ready replicas</legend>
+        <p id="ready-now" class="subtitle">Ready now: 4</p>
+        <label>Count <input id="ready-count" type="number" min="0" max="4" value="4"></label>
+        <button type="button" id="apply-ready" class="apply">Apply</button>
+        <p class="subtitle">Set to 0 to mark the fake engine unready. A request waits, People waiting shows the queue, and the door stays up.</p>
+      </fieldset>
+    </header>
+
+    <div id="view-nav" role="tablist" aria-label="Fleet views">
+      <button type="button" id="tab-fleet" role="tab" aria-controls="panel-fleet" aria-selected="true">Fleet capacity</button>
+      <button type="button" id="tab-efficiency" role="tab" aria-controls="panel-efficiency" aria-selected="false">Efficiency</button>
+      <button type="button" id="tab-behavior" role="tab" aria-controls="panel-behavior" aria-selected="false">Model behavior</button>
+    </div>
+    <p id="current-view">Current view: Fleet capacity</p>
+
+    <main aria-busy="true">
+      <section id="panel-fleet" role="tabpanel" aria-labelledby="tab-fleet" tabindex="0">
+        <div id="answers" aria-live="polite" aria-atomic="true">
+          <p id="gpus-idle" class="lead">GPUs idle: loading</p>
+          <p id="people-waiting" class="lead">People waiting: loading</p>
+        </div>
+        <p id="saturation" hidden>Saturation: quiet.</p>
+        <h2>Researcher detail</h2>
+        <div class="table-wrap">
+          <table>
+            <caption>Fixture gauges. Status is written in words: ready GPUs, idle GPUs, waiting requests, pending pods, spot, and on-demand.</caption>
+            <thead>
+              <tr>
+                <th scope="col">Gauge</th>
+                <th scope="col">Value</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody id="fleet-rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="panel-efficiency" role="tabpanel" aria-labelledby="tab-efficiency" tabindex="0" hidden>
+        <h2>Efficiency</h2>
+        <p id="tokens-served" hidden>Tokens served: 0</p>
+        <p id="budget-rejections" hidden>Budget rejections: 0</p>
+        <div class="table-wrap">
+          <table>
+            <caption>Fixture window. Tokens per second, a fixture cost ratio, and KV fill.</caption>
+            <thead>
+              <tr>
+                <th scope="col">Gauge</th>
+                <th scope="col">Value</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody id="efficiency-rows"></tbody>
+          </table>
+        </div>
+        <p id="cost-detail" hidden></p>
+        <p id="fixed-costs">Outside the headline: control plane, CPU door, local edge, weight storage.</p>
+        <p id="formula-check">Formula check only. $2 of GPU and 400,000 tokens is $0.005 per thousand. Not the fleet ratio.</p>
+      </section>
+
+      <section id="panel-behavior" role="tabpanel" aria-labelledby="tab-behavior" tabindex="0" hidden>
+        <h2>Model behavior</h2>
+        <div class="table-wrap">
+          <table>
+            <caption>Fixture fleet series. Time to first token and inter-token latency. The quality card is below.</caption>
+            <thead>
+              <tr>
+                <th scope="col">Gauge</th>
+                <th scope="col">Value</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody id="behavior-rows"></tbody>
+          </table>
+        </div>
+        <h3>Quality card</h3>
+        <p id="workload-card">Workload card. Concurrency 4. Prompt lengths 8, 16. Output lengths 4, 8. Streaming yes.</p>
+        <p id="quality-line">No warm report yet.</p>
+        <p id="cold-line">No cold report yet.</p>
+        <p id="cold-separate">Cold time stays out of the warm percentiles.</p>
+        <h3>Timeline</h3>
+        <div class="table-wrap">
+          <table>
+            <caption>Replayed log on one timeline. Training, scheduler, and inference. Not a training run.</caption>
+            <thead>
+              <tr>
+                <th scope="col">Time</th>
+                <th scope="col">Lane</th>
+                <th scope="col">What</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>00:00</td>
+                <td>Training</td>
+                <td>job finished</td>
+              </tr>
+              <tr>
+                <td>00:00</td>
+                <td>Scheduler</td>
+                <td>pending pods 1. No node yet.</td>
+              </tr>
+              <tr>
+                <td>00:02</td>
+                <td>Training</td>
+                <td>weights published</td>
+              </tr>
+              <tr>
+                <td>00:02</td>
+                <td>Scheduler</td>
+                <td>pending pods 1. Still loading.</td>
+              </tr>
+              <tr>
+                <td>00:05</td>
+                <td>Training</td>
+                <td>replica ready</td>
+              </tr>
+              <tr>
+                <td>00:05</td>
+                <td>Scheduler</td>
+                <td>node appeared. Spot, fixture. Pending pods 0.</td>
+              </tr>
+              <tr>
+                <td>00:05</td>
+                <td>Inference</td>
+                <td id="inference-text">No harness report yet.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <article class="note" id="note-warm-floor">
+          <h3>Warm floor versus scale-to-zero</h3>
+          <p><span class="note-label">Metric</span> <span id="note-warm-metric">Cold-start time until first success, and cost per thousand tokens over a window that includes the idle period, with the warm floor's node hours kept in the numerator.</span></p>
+          <p><span class="note-label">Result</span> <span id="note-warm-result" class="note-value"></span></p>
+          <p><span class="note-label">Choice</span> <span id="note-warm-choice" class="note-value"></span></p>
+        </article>
+        <article class="note" id="note-spot">
+          <h3>Spot versus on-demand</h3>
+          <p><span class="note-label">Metric</span> <span id="note-spot-metric">Share of GPU hours on spot, streams cut on spot reclaim, and the cost ratio with spot and on-demand separated.</span></p>
+          <p><span class="note-label">Result</span> <span id="note-spot-result" class="note-value"></span></p>
+          <p><span class="note-label">Choice</span> <span id="note-spot-choice" class="note-value"></span></p>
+        </article>
+        <p class="subtitle">A hold past the budget returns 503 and releases the reserve.</p>
+      </section>
+    </main>
+
+    <section id="telemetry" hidden>
+      <h2>Event log</h2>
+      <pre id="event-log" class="log" aria-label="Event log"></pre>
+      <h2>Trace</h2>
+      <pre id="trace-view" class="log" aria-label="Trace"></pre>
+    </section>
+
+    <footer>
+      <p id="footer-note">Local fixture only. This page does not use a cloud account.</p>
+    </footer>
+    <noscript>
+      <p class="notice">JavaScript in this browser reads the local fixture file. This page does not contact a cloud account.</p>
+    </noscript>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

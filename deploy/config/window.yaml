@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: inference-window
+  namespace: inference
+  labels:
+    app.kubernetes.io/part-of: inference
+data:
+  bucket: replace-with-weight-bucket
+  priceG6Spot: "0"
+  priceG6OnDemand: "0"
+  priceG5Spot: "0"
+  priceG5OnDemand: "0"

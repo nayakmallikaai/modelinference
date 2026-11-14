@@ -1,0 +1,47 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: inference
+  namespace: inference
+  labels:
+    app.kubernetes.io/part-of: inference
+spec:
+  groups:
+    - name: inference
+      rules:
+        - record: inference_busy
+          expr: |
+            sum(door_requests_waiting or vector(0))
+            + sum(door_requests_in_flight or vector(0))
+            + sum(vllm:num_requests_waiting or vector(0))
+            + sum(vllm:num_requests_running or vector(0))
+        - alert: InferenceSaturation
+          expr: |
+            sum(door_requests_waiting or vector(0)) > 0
+            and
+            kube_deployment_status_replicas_available{deployment="vllm"} >= 2
+          for: 2m
+          labels:
+            severity: page
+          annotations:
+            summary: Ready replicas are at the cap and work is still waiting.
+        - alert: InferenceColdStartStuck
+          expr: |
+            sum(door_requests_waiting or vector(0)) > 0
+            and
+            (kube_deployment_status_replicas_available{deployment="vllm"} or vector(0)) == 0
+          for: 15m
+          labels:
+            severity: page
+          annotations:
+            summary: Door waiters are above zero and ready replicas are zero past the startup budget.
+        - alert: InferenceKvCachePressure
+          expr: |
+            max(vllm:gpu_cache_usage_perc) > 0.90
+            and
+            (sum(vllm:num_requests_waiting or vector(0)) > 0 or sum(door_requests_waiting or vector(0)) > 0)
+          for: 5m
+          labels:
+            severity: page
+          annotations:
+            summary: KV cache is above 0.90 while requests are waiting.

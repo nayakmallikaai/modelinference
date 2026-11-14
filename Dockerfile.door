@@ -1,0 +1,16 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+RUN pip install --no-cache-dir tokenizers==0.21.4
+
+COPY door.py telemetry.py tokens.py netutil.py workload.py token_count.py run_door.py /app/
+COPY tokenizer/tokenizer.json tokenizer/tokenizer_config.json /app/tokenizer/
+
+ENV PORT=8080 \
+    BIND=0.0.0.0 \
+    TOKENIZER_DIR=/app/tokenizer
+
+EXPOSE 8080
+
+CMD ["python3", "run_door.py"]

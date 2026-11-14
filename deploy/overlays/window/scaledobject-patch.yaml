@@ -1,0 +1,8 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: vllm
+  namespace: inference
+spec:
+  maxReplicaCount: 1
+  cooldownPeriod: 60

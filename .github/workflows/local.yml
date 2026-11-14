@@ -1,0 +1,44 @@
+name: local
+
+on:
+  pull_request:
+
+jobs:
+  harness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Harness
+        run: |
+          python3 serve.py > serve.log 2>&1 &
+          pid=$!
+          trap 'kill $pid' EXIT
+          python3 - <<'PY'
+          import time
+          import urllib.request
+          for _ in range(50):
+              try:
+                  urllib.request.urlopen("http://127.0.0.1:8787/health", timeout=1)
+                  break
+              except Exception:
+                  time.sleep(0.2)
+          else:
+              raise SystemExit("local edge did not start")
+          PY
+          python3 harness.py
+
+      - name: Manifests
+        run: |
+          python3 -m pip install --disable-pip-version-check pyyaml
+          curl -fsSL -o /tmp/kubeconform.tar.gz https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz
+          tar -C /tmp -xzf /tmp/kubeconform.tar.gz
+          sudo mv /tmp/kubeconform /usr/local/bin/kubeconform
+          python3 check_manifests.py

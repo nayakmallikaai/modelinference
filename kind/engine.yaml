@@ -1,0 +1,49 @@
+# CPU stand-in for the vLLM Deployment. kind has no GPU, so this file
+# requests none and is not part of deploy/. Karpenter pools are not applied.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm
+  namespace: inference
+  labels:
+    app: vllm
+    app.kubernetes.io/part-of: inference
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      app: vllm
+  template:
+    metadata:
+      labels:
+        app: vllm
+        app.kubernetes.io/part-of: inference
+    spec:
+      containers:
+        - name: vllm
+          image: inference-engine:local
+          imagePullPolicy: IfNotPresent
+          command: ["python3", "run_engine.py"]
+          env:
+            - name: PORT
+              value: "8000"
+          ports:
+            - name: http
+              containerPort: 8000
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 2
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi

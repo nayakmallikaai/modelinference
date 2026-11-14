@@ -1,0 +1,73 @@
+name: gpu-window
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: inference-gpu-window
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  window:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: gpu-window
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Require confirmation
+        env:
+          GPU_WINDOW_CONFIRM: ${{ vars.GPU_WINDOW_CONFIRM }}
+        run: python3 -c 'import os,sys; sys.exit(0 if os.environ.get("GPU_WINDOW_CONFIRM")=="yes" else 2)'
+
+      - name: Install tools
+        run: |
+          curl -fsSL -o /tmp/eksctl.tar.gz "https://github.com/eksctl-io/eksctl/releases/download/v0.231.0/eksctl_Linux_amd64.tar.gz"
+          tar -C /tmp -xzf /tmp/eksctl.tar.gz
+          sudo mv /tmp/eksctl /usr/local/bin/eksctl
+          curl -fsSL -o /tmp/helm.tar.gz "https://get.helm.sh/helm-v3.17.1-linux-amd64.tar.gz"
+          tar -C /tmp -xzf /tmp/helm.tar.gz
+          sudo mv /tmp/linux-amd64/helm /usr/local/bin/helm
+          curl -fsSL -o /tmp/kubectl "https://dl.k8s.io/release/v1.32.2/bin/linux/amd64/kubectl"
+          sudo install -m 0755 /tmp/kubectl /usr/local/bin/kubectl
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.GPU_WINDOW_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Window
+        env:
+          GPU_WINDOW_CONFIRM: ${{ vars.GPU_WINDOW_CONFIRM }}
+          WEIGHT_BUCKET: ${{ vars.WEIGHT_BUCKET }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          PRICE_G6_SPOT: ${{ vars.PRICE_G6_SPOT }}
+          PRICE_G6_ONDEMAND: ${{ vars.PRICE_G6_ONDEMAND }}
+          PRICE_G5_SPOT: ${{ vars.PRICE_G5_SPOT }}
+          PRICE_G5_ONDEMAND: ${{ vars.PRICE_G5_ONDEMAND }}
+        run: python3 gpu_window.py run
+
+      - name: Save reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: window-reports
+          path: reports/
+          if-no-files-found: ignore
+
+      - name: Destroy
+        if: always()
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        run: python3 gpu_window.py destroy

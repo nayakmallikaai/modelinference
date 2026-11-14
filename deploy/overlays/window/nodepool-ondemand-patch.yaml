@@ -1,0 +1,7 @@
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: gpu-ondemand
+spec:
+  disruption:
+    consolidateAfter: 30s
